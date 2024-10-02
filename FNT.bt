@@ -48,8 +48,8 @@ typedef struct
 		ushort charSpacingsIndex; //to space section later
 		uint charSpacingsCount; //to space section later
 
-		float charOffsetX; //possible x offset to move glyph into text placement
-		float charOffsetY; //possible y offset to move glyph into text placement
+		float charOffsetX; //x offset to move glyph into text placement
+		float charOffsetY; //y offset to move glyph into text placement
 		float charWidth; //possible size
 		float zero; //always 0
 

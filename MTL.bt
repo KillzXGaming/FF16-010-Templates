@@ -47,7 +47,7 @@ struct Header
     {
        NameOffset path;
        NameOffset name;
-    }texturePaths[numTexturePaths]<optimize=false>;
+    }texturePaths[numTexturePaths]<optimize=false, read=Str(this.path.name)>;
     
     struct TextureConstant
     {
