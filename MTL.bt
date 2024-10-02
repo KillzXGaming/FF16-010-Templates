@@ -1,0 +1,89 @@
+//------------------------------------------------
+//--- 010 Editor v15.0 Binary Template
+//
+//      File: 
+//   Authors: KillzXGaming
+//   Version: 
+//   Purpose: 
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+struct NameOffset;
+struct NameOffset16;
+
+int Align(int pos, int alignment) {
+    local int amount = (-pos % alignment + alignment) % alignment;
+
+    return pos + amount;
+}
+
+struct Header
+{
+    
+    char magic[4]; //MTL 
+    uint flags;
+    uint size; //size of chunk
+    uint padd;
+    
+    ushort numTexturePaths;   
+    ushort unk;
+    uint paramSectionSize;
+    ushort numConstants;
+    ushort numShaders;
+    ushort unk5;
+    byte unk3;
+    ubyte unk4;
+    ushort paramSize;
+    ushort numTotalTextures;
+
+    local uint string_table_pos = Align(FTell() + 4 + 
+        numTexturePaths * 8 + numConstants * 8 + paramSectionSize, 8);
+
+    NameOffset shaderNameOffsets[1] <optimize=false>;
+    
+    struct TexturePath
+    {
+       NameOffset path;
+       NameOffset name;
+    }texturePaths[numTexturePaths]<optimize=false>;
+    
+    struct TextureConstant
+    {
+        ushort flag_type; //0 or 1,
+        NameOffset16 name;
+        byte flags[4];
+    }textureConstants[numConstants]<optimize=false>;
+
+    float paramData[paramSize / 4];
+    
+    struct TextureBindInfo
+    {
+       byte slot;
+       byte type;
+    }textureBinds[numTotalTextures]<optimize=false>;
+
+} header <bgcolor=cYellow>;
+
+typedef struct {
+    ushort nameOffset;
+    
+    local uint origin = FTell();
+    
+    FSeek(string_table_pos + nameOffset);
+    string name;
+    
+    FSeek(origin);
+} NameOffset16<read=Str(this.name)>;
+
+typedef struct {
+    uint nameOffset;
+    
+    local uint origin = FTell();
+    
+    FSeek(string_table_pos + nameOffset);
+    string name;
+    
+    FSeek(origin);
+} NameOffset<read=Str(this.name)>;

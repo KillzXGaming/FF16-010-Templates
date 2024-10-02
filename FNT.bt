@@ -1,0 +1,70 @@
+//------------------------------------------------
+//--- 010 Editor v15.0 Binary Template
+//
+//      File: 
+//   Authors: KillzXGaming
+//   Version: 
+//   Purpose: 
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+struct FontData;
+
+const uint MAX_CHAR_COUNT = 65536;
+
+struct Header
+{
+    char magic[4];
+    ushort unk;
+    ushort unk; //header size?
+ 
+    uint stringPoolSize;
+    uint fontDataSize; //after header (160 in bytes)
+    ushort unknown; 
+    ushort numCharacterInfo;
+    uint numCharacterSpacings;
+    
+    float font_params[7]; //possible sdf params
+
+    FSeek(64);
+    string texFile; //file name for .tex image data
+    string kerningFile; //file name for .ker kerning data
+    
+    FSeek(64 + stringPoolSize);
+    FontData fontHeader;
+
+}pzdHeader<bgcolor=cYellow>;
+
+typedef struct 
+{
+    ushort char_table[MAX_CHAR_COUNT]; //char_table['A'] for example to get CharacterInfo index
+    
+    struct CharacterInfo
+    {
+		ushort padd; //always 0
+		ushort charSpacingsIndex; //to space section later
+		uint charSpacingsCount; //to space section later
+
+		float charOffsetX; //possible x offset to move glyph into text placement
+		float charOffsetY; //possible y offset to move glyph into text placement
+		float charWidth; //possible size
+		float zero; //always 0
+
+		ushort bitmapX; //divide by 4 to get pos
+		ushort bitmapY; //divide by 4 to get pos
+		ushort bitmapSizeW; //divide by 4 to get size
+		ushort bitmapSizeH; //divide by 4 to get size
+    }chars[numCharacterInfo];
+    
+    struct CharacterSpacings
+    {
+        ushort char1; 
+        ushort char2; 
+        float offsetX; 
+        float offsetY; 
+    }charSpaces[numCharacterSpacings];
+    
+}FontData;

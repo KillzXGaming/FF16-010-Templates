@@ -1,0 +1,180 @@
+//------------------------------------------------
+//--- 010 Editor v15.0 Binary Template
+//
+//      File: 
+//   Authors: KillzXGaming
+//   Version: 
+//   Purpose: 
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+struct NameOffset;
+struct NameOffset16;
+struct ShaderHeader;
+struct ShaderData;
+struct ShaderProgram;
+struct UnknownSection1;
+struct UnknownSection2;
+struct Uniform;
+
+struct Header
+{
+    ShaderHeader shaderHeader;
+    
+    local uint pos = FTell();
+    
+    uint padding;
+    uint unkCount;
+    uint padding;
+    uint padding;
+    
+    uint unk;
+    uint unk;
+    uint unk;
+    uint unk;
+      
+    
+    FSeek(pos + shaderHeader.unkOffset1);
+    UnknownSection1 unks1[(shaderHeader.unkCount1)];
+    
+    FSeek(pos + shaderHeader.shaderProgramOffset);
+    ShaderProgram shaderPrograms[shaderHeader.shaderProgramCount];
+    
+    FSeek(pos + shaderHeader.indicesOffset);
+    uint indices[shaderHeader.indicesCount]; //some indices link to shaders
+    
+    
+    FSeek(pos + shaderHeader.stringTableOffset);
+    byte strings[shaderHeader.stringTableSize];
+
+    FSeek(pos + shaderHeader.unkShaderOffset);
+    ulong shaderEmpty[shaderHeader.unkShaderCount];
+    
+    FSeek(pos + shaderHeader.shaderOffset);
+    
+    ShaderData shaderList[shaderHeader.shaderCount]<optimize=false>;
+
+    FSeek(pos + shaderHeader.unkOffset4);
+    UnknownSection2 unk4[shaderHeader.unkCount4];;
+   
+    FSeek(pos + shaderHeader.unkOffset5);
+    uint unknown;
+    
+    FSeek(pos + shaderHeader.uniformBufferOffset);
+    
+    local uint count = (pos +shaderHeader.stringTableOffset - FTell()) / 4;
+    Uniform uniforms[count]<optimize=false>;
+    
+   
+   
+    FSeek(pos + shaderHeader.samplerNameOffset);
+    NameOffset16 samplerNames[shaderHeader.samplerCount]<optimize=false>;
+
+    FSeek(pos + shaderHeader.unkOffset7);
+    uint unks[unkCount];
+
+ 
+ 
+  
+} header <bgcolor=cYellow>;
+
+typedef struct {
+    char magic[4]; //TEC 
+    uint flags;
+    uint size; //size of chunk
+    uint padd;
+    
+    uint unkOffset1;
+    uint unkCount1;
+    
+    uint shaderProgramOffset;
+    uint shaderProgramCount;
+    
+    uint unkShaderOffset;
+    uint unkShaderCount;
+    
+    uint indicesOffset;
+    uint indicesCount;
+    
+    uint shaderOffset;
+    uint shaderCount;
+    
+    uint unkOffset4;
+    uint unkCount4;
+    
+    uint sectionSize;
+    uint shaderSize;
+    
+    uint stringTableOffset;
+    uint stringTableSize;
+    
+    uint unkOffset5;
+    uint uniformBufferOffset;
+    
+    uint samplerCount;
+    uint samplerNameOffset;
+    uint unkOffset7;
+    uint unk;
+    
+    uint padding;
+    uint padding;
+    
+} ShaderHeader;
+
+typedef struct {
+    ubyte type; 
+    ubyte flag;
+    NameOffset16 name; 
+} Uniform <bgcolor=cGreen, read=Str(this.name.name)>;
+
+typedef struct {
+    uint index; //index to shader data index list
+    uint count; //count to shader data index list
+} ShaderProgram <bgcolor=cGreen>;
+
+typedef struct {
+   byte unks[64];
+} UnknownSection1 <bgcolor=cGreen>;
+
+typedef struct {
+    ushort unk; 
+    ushort unk; 
+} UnknownSection2 <bgcolor=cGreen>;
+
+typedef struct {
+    uint shaderOffset;
+    uint shaderSize;
+    uint unk;
+    uint unk;
+    
+    local uint origin = FTell();
+    
+    FSeek(pos + shaderHeader.sectionSize + shaderOffset);
+    byte shader[shaderSize];
+   
+    FSeek(origin);
+} ShaderData <bgcolor=cGreen>;
+
+typedef struct {
+    ushort nameOffset;
+    
+    local uint origin = FTell();
+    
+    FSeek(pos + shaderHeader.stringTableOffset + nameOffset);
+    string name;
+    
+    FSeek(origin);
+} NameOffset16<read=Str(this.name)>;
+
+typedef struct {
+    uint nameOffset;
+    
+    local uint origin = FTell();
+    
+    FSeek(pos + stringTableOffset + nameOffset);
+    string name;
+    
+    FSeek(origin);
+} NameOffset<read=Str(this.name)>;

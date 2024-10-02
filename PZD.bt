@@ -1,0 +1,72 @@
+//------------------------------------------------
+//--- 010 Editor v15.0 Binary Template
+//
+//      File: 
+//   Authors: KillzXGaming
+//   Version: 
+//   Purpose: 
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+struct StringValue;
+
+struct Header
+{
+    char magic[4];
+    uint unk[7];
+    
+    uint textContentOffset;
+    uint textContentCount;
+    
+    FSeek(textContentOffset);
+   
+    struct PzdTextContent
+    {
+        local uint pos = FTell();
+        
+        uint flags;
+        StringValue messageString;
+        uint unk;
+        uint unk;
+        StringValue voiceFileString;
+        uint unk;
+        StringValue unknownString;
+        uint unk;
+    }textContents[textContentCount]<optimize=false>;
+    
+    struct SerializeInfo
+    {
+        local uint pos = FTell();
+        
+        uint offset;
+        uint count;
+        uint padding[2];
+        
+        FSeek(pos + offset);
+        
+        struct SerializeEntry
+        {
+            local uint pos = FTell();
+            StringValue struct_name;
+            uint struct_size;
+        }entries[count] <optimize=false>;
+    }serializeInfo;
+    
+}pzdHeader<bgcolor=cYellow>;
+
+typedef struct
+{
+    uint stringOffset;
+    
+    local uint origin = FTell();
+
+    FSeek(pos + stringOffset);
+	string value <bgcolor=cGreen>;
+    
+    FSeek(origin);
+        
+} StringValue <read=value, bgcolor=cYellow>;
+
