@@ -15,8 +15,9 @@ struct NameOffset16;
 struct ShaderHeader;
 struct ShaderData;
 struct ShaderProgram;
+struct ShaderDefineInfo;
+struct ShaderDefine;
 struct UnknownSection1;
-struct UnknownSection2;
 struct Uniform;
 
 struct Header
@@ -45,7 +46,6 @@ struct Header
     FSeek(pos + shaderHeader.indicesOffset);
     uint indices[shaderHeader.indicesCount]; //some indices link to shaders
     
-    
     FSeek(pos + shaderHeader.stringTableOffset);
     byte strings[shaderHeader.stringTableSize];
 
@@ -53,27 +53,13 @@ struct Header
     ulong shaderEmpty[shaderHeader.unkShaderCount];
     
     FSeek(pos + shaderHeader.shaderOffset);
-    
     ShaderData shaderList[shaderHeader.shaderCount]<optimize=false>;
 
-    FSeek(pos + shaderHeader.unkOffset4);
-    UnknownSection2 unk4[shaderHeader.unkCount4];;
-   
-    FSeek(pos + shaderHeader.unkOffset5);
-    uint unknown;
-    
-    FSeek(pos + shaderHeader.uniformBufferOffset);
-    
-    local uint count = (pos +shaderHeader.stringTableOffset - FTell()) / 4;
-    Uniform uniforms[count]<optimize=false>;
-    
-   
-   
     FSeek(pos + shaderHeader.samplerNameOffset);
     NameOffset16 samplerNames[shaderHeader.samplerCount]<optimize=false>;
 
-    FSeek(pos + shaderHeader.unkOffset7);
-    uint unks[unkCount];
+    FSeek(pos + shaderHeader.samplerConfigOffset);
+    uint samplerConfig[shaderHeader.samplerCount] <format=binary>;
 
  
  
@@ -92,7 +78,7 @@ typedef struct {
     uint shaderProgramOffset;
     uint shaderProgramCount;
     
-    uint unkShaderOffset;
+    uint unkShaderOffset; //to empty 8 bytes
     uint unkShaderCount;
     
     uint indicesOffset;
@@ -101,8 +87,8 @@ typedef struct {
     uint shaderOffset;
     uint shaderCount;
     
-    uint unkOffset4;
-    uint unkCount4;
+    uint shaderDefineOffset;
+    uint shaderDefineCount;
     
     uint sectionSize;
     uint shaderSize;
@@ -110,12 +96,12 @@ typedef struct {
     uint stringTableOffset;
     uint stringTableSize;
     
-    uint unkOffset5;
+    uint shaderDefineInfoOffset;
     uint uniformBufferOffset;
     
     uint samplerCount;
     uint samplerNameOffset;
-    uint unkOffset7;
+    uint samplerConfigOffset;
     uint unk;
     
     uint padding;
@@ -124,7 +110,7 @@ typedef struct {
 } ShaderHeader;
 
 typedef struct {
-    ubyte type; 
+    ubyte index; 
     ubyte flag;
     NameOffset16 name; 
 } Uniform <bgcolor=cGreen, read=Str(this.name.name)>;
@@ -135,25 +121,63 @@ typedef struct {
 } ShaderProgram <bgcolor=cGreen>;
 
 typedef struct {
-   byte unks[64];
+   ubyte unks[64];
 } UnknownSection1 <bgcolor=cGreen>;
 
 typedef struct {
-    ushort unk; 
-    ushort unk; 
-} UnknownSection2 <bgcolor=cGreen>;
+    ushort shaderDefineInfoIndex;  //index to shader info section
+    ushort uniformStringStartIndex; //index start of the uniform string list
+
+    local uint origin = FTell();
+    
+    //shader define info (56 byte struct)
+    FSeek(pos + shaderHeader.shaderDefineInfoOffset + shaderDefineInfoIndex * 56);
+    ShaderDefineInfo shaderDefineInfo;
+    FSeek(origin);
+} ShaderDefine <bgcolor=cGreen>;
+
+typedef struct {
+    byte unk;
+    byte unk;
+    byte unks1[6];
+    byte unk2;
+    byte unks2[7];
+    byte unk3;
+    byte unks3[7 + 24];
+   
+   byte numBlocks;
+   byte numUniforms;
+   byte numSamplers;
+   byte unk;
+   
+   byte unks4[4];
+   
+    //load shader info symbols
+    FSeek(pos + shaderHeader.uniformBufferOffset + uniformStringStartIndex * 4);
+    Uniform blocks[shaderDefineInfo.numBlocks & 0xf]<optimize=false>;
+    Uniform uniforms[shaderDefineInfo.numUniforms]<optimize=false>;
+    Uniform samplers[shaderDefineInfo.numSamplers]<optimize=false>;
+   
+} ShaderDefineInfo <bgcolor=cGreen>;
 
 typedef struct {
     uint shaderOffset;
     uint shaderSize;
-    uint unk;
-    uint unk;
+    uint shaderDefineIndex;
+    byte unk; //0 or 1
+    byte unk; //2
+    ushort unk; //0
     
     local uint origin = FTell();
     
     FSeek(pos + shaderHeader.sectionSize + shaderOffset);
     byte shader[shaderSize];
-   
+    
+    if (shaderSize > 0)
+    {
+        FSeek(pos + shaderHeader.shaderDefineOffset + shaderDefineIndex * 4);
+        ShaderDefine shaderDefs;
+    }
     FSeek(origin);
 } ShaderData <bgcolor=cGreen>;
 

@@ -27,8 +27,12 @@ struct Header
     ushort numCharacterInfo;
     uint numCharacterSpacings;
     
-    float font_params[7]; //possible sdf params
-
+    float font_params[5]; //possible sdf params
+    ushort unks;
+    ushort texWidth; // //divide by 4 to get size
+    ushort texHeight; // //divide by 4 to get size
+    ushort unk;
+    
     FSeek(64);
     string texFile; //file name for .tex image data
     string kerningFile; //file name for .ker kerning data

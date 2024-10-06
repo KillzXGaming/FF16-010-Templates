@@ -39,7 +39,7 @@ struct Header
     ushort numTotalTextures;
 
     local uint string_table_pos = Align(FTell() + 4 + 
-        numTexturePaths * 8 + numConstants * 8 + paramSectionSize, 8);
+        numTexturePaths * 8 + numConstants * 8 + paramSectionSize, 16);
 
     NameOffset shaderNameOffsets[1] <optimize=false>;
     
