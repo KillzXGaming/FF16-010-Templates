@@ -1,0 +1,334 @@
+//------------------------------------------------
+//--- 010 Editor v14.0 Binary Template
+//
+//      File: MDL
+//   Authors: Someone else
+//   Version: 
+//   Purpose: 
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+struct ExternalContent;
+
+int AlignWeird(int a, int n) {
+    local int remain = a % n;
+    return a + n - remain;
+}
+
+
+typedef struct NAMEPTR{
+    uint64 offset;
+    uint64 padding;
+} NamePtr;
+
+typedef struct NAME{
+    string name;
+} Name<read=Str(this.name)>;
+
+typedef struct VECTOR3 {
+    float x<name="x">;
+    float y<name="y">;
+    float z<name="z">;
+} Vector3<read=(Str("(%f, %f, %f)",this.x, this.y, this.z))>;
+
+typedef struct MDLHEADER {
+    char magic[4];
+    uint unk;
+    uint materialSectionSize;
+    uint meshSpecsSectionSize;
+    ushort materialNamesCount;
+    ushort materialDefsCount;
+    ubyte matEntry1Count;
+    ubyte lodCount;
+    ubyte unkCount;
+    ubyte unk2;
+    //Assert(unk1 == 0);
+    uint vBuffersOffsets[8];
+    uint idxBuffersOffsets[8];
+    uint vBuffersSizes[8];
+    uint idxBuffersSizes[8];
+    uint eofOffset;
+    uint eofInfoCount;
+    uint eofOffset2;
+    uint eofInfoCount2;
+    //Assert(eofOffset == eofOffset2);
+} MdlHeader;
+
+typedef struct ATTRIBUTESET {
+    ushort idxAttrStart;
+    ushort idxAttrCount;
+} AttributeSet;
+
+typedef struct MESHINFO {
+    ushort submeshStart;
+    ushort submeshCount;
+    uint unk0;
+    uint unk1;
+    uint triCount;
+    uint vBufferOffset;
+    uint idxBufferOffset;
+    uint decompvBuffSize;
+    uint decompIdxBuffSize;
+    uint decompIdxBuffSizeMultiplied6;
+    uint vertexCount;
+    uint unk3[6];
+} MeshInfo<size=0x40>;
+
+typedef struct SUBMESHINFO {
+    uint idxCount;
+    uint idxOffset;
+    ushort vertexCount;
+    ushort materialID;
+    ushort entries1Index;
+    ushort entries1Count;
+    byte attributeSetIndex; //list of attributes
+    byte colorSetFlagsMaybe;
+    byte boneSetFlags;
+    byte texCoordSetFlags;
+    uint flag2;
+    uint unks2[6];
+    uint padding;
+    byte unks[3];
+    byte usedBufferCount;
+    uint bufferOffsets[8];
+    ubyte strides[8];
+    
+} SubmeshInfo<size=0x60>;
+
+typedef struct MESHSPECENTRY1 {
+    uint indexStart;
+    uint indexCount;
+    uint flag;
+    uint padding;
+    
+    uint padding;
+    uint padding;
+    uint padding;
+    uint padding;
+    
+} MeshSpecEntry1;
+
+typedef struct MESHSPECENTRY2 {
+    uint nameOffset;
+    Vector3 posMaybe;
+} MeshSpecEntry2;
+
+typedef struct JOINTBOUNDINGENTRY {
+    Vector3 boundingMin;
+    Vector3 boundingMax;
+    float unk[2];
+} JointBoundingEntry;
+
+typedef struct JOINTMUSCLEENTRY {
+    uint entryOffset;
+    float unk0;
+    ushort indicesSet[4];
+    ushort indicesSet2[4];
+    float weightSet1[4];
+    float weightSet2[4];
+    Vector3 vec1;
+    Vector3 vec2;
+} JointMuscleEntry;
+
+typedef struct JOINTFACEENTRY {
+    float a[7];
+    ushort b[2];
+} JointFaceEntry;
+
+typedef struct MESHSPECENTRY4 {
+    uint64 nameOffset;
+    uint64 jointName;
+} MeshSpecEntry4;
+
+typedef struct SKINFLAGS2 {
+    ubyte unk0;
+    ubyte boneIndicesDataType;
+} SkinFlags2;
+
+typedef struct MESHSPECSHEADER {
+    uint MCEXSizeSomewhat;
+    ushort submeshCount;
+    ushort part1Count;
+    ushort entry1Count;
+    ushort matCount;
+    uint jointJCount;
+    ushort unk1;
+    ushort meshCount;
+    ubyte unk3a;
+    ubyte jointFaceCount;
+    ushort jointMuscleCount;
+    ubyte entry3aCount;
+    ubyte part2Count;
+    ubyte unk6;
+    ubyte part3Count;
+    uint extraSectionSize;
+    uint attributeCount;
+    uint nameSectionTotalLength;
+    uint unk9;
+    uint unk10;
+    float floatData[2];
+    uint bufferDecomp1; //end of file buffer 1
+    uint bufferDecomp2; //end of file buffer 2
+      
+} MeshSpecsHeader;
+
+typedef struct MESHSPECS {    
+    
+    MeshSpecsHeader header;
+    
+    MeshInfo meshInfo[header.meshCount];
+    SubmeshInfo submeshInfo[header.submeshCount];
+    MeshSpecEntry1 entries1[header.entry1Count];
+    MeshSpecEntry2 joints[header.jointJCount];
+    MeshSpecEntry2 mats[header.matCount];
+    uint64 jointFaceNameOffsets[header.jointFaceCount];
+    JointMuscleEntry jointMuscleEntry[header.jointMuscleCount];
+    JointFaceEntry Entry3A[header.entry3aCount];    
+    MeshSpecEntry2 parts2[header.part2Count];
+    MeshSpecEntry2 parts1[header.part1Count];
+    MeshSpecEntry4 parts3[header.part3Count];
+    byte extraSection[header.extraSectionSize];
+    
+    local uint pos = FTell();
+    ExternalContent externalContent;
+    
+    FSeek(pos + AlignWeird(header.MCEXSizeSomewhat,8));
+
+    
+    if (header.jointJCount>0)
+        JointBoundingEntry jointBoundingeEntries[header.jointJCount+1];
+    Name matNames[header.matCount]<optimize=false>;
+    Name jointNames[header.jointJCount]<optimize=false>;
+    Name jointFaceNames[header.jointFaceCount]<optimize=false>;
+    Name jointMuscleNames[header.jointMuscleCount]<optimize=false>;
+    Name part2Names[header.part2Count]<optimize=false>;
+    Name part1Names[header.part1Count]<optimize=false>;
+    Name part3Names[header.part3Count]<optimize=false>;
+    
+} MeshSpec;
+
+typedef struct EXTERNALCONTENT() {
+    local uint pos = FTell();
+    
+    char magic[4];
+    uint flag;
+    byte pad[24];
+    uint offset;
+    uint count;
+    if (count == 0)
+         return;
+    
+    FSeek(pos + offset);
+     local uint start = FTell();
+    uint numEntries;
+    uint unks[5];
+    uint numStructs;
+    uint unks2[19];
+    
+    struct ExternalEntryy
+    {
+        int offset;
+        int size;
+        local uint origin = FTell();
+        FSeek(start + offset);
+        
+        byte data[size];
+        FSeek(origin);
+        
+    }externalEntries[numEntries]<optimize=false>;
+    
+    uint unk;
+    uint unk;
+    int unkOffsets[numStructs];
+    int unks3[numStructs];
+    int unks4[numStructs];
+
+} ExternalContent;
+
+typedef struct BUFFER(int size) {
+    byte buffer[size];
+} Buffer;
+
+struct FILE {
+    LittleEndian();
+    MdlHeader header;
+    AttributeSet attributeSets[header.matEntry1Count];
+    
+    struct Attributes
+    {
+        ubyte bufferIdx;
+        ubyte attributeOffset;
+        
+        enum <ubyte>
+        {
+            Vec2f = 34,
+            Vec3f = 35,
+            Vec4f = 36,
+            HalfFloat2 = 50,
+            HalfFloat4 = 52,
+            Byte4 = 68,
+            Unorm8 = 116,
+        } Format;
+
+        enum <ubyte>
+        {
+            Position = 0,
+            BoneWeightsSet1 = 1, 
+            BoneIndicesSet1 = 2,
+            Color0 = 3,
+            
+            UnknownAttr3 = 8,
+            UnknownAttr4 = 9,
+
+            TexCoord01 = 11,
+            TexCoord2 = 12,
+            Normals = 21,
+            Tangents = 22,
+            Binormal = 23,
+            UnknownAttr2 = 24,
+
+            BoneWeightsSet2 = 28,
+            BoneIndicesSet2 = 29,
+       } Type;
+
+    }AttributeList[header.materialDefsCount];
+    
+    float BoundingRadius[2];
+    float BoundingBox[6];
+    NamePtr matNamesPtrs[header.materialNamesCount];
+    uint64 unkEntries[header.unkCount];
+    Name matNames[header.materialNamesCount]<optimize=false>;
+    
+    FSeek(0xA8 + header.materialSectionSize);
+    MeshSpec meshSpec;
+    Assert(meshSpec.header.matCount == header.materialNamesCount);
+    
+    local int i<hidden=true> = 0;
+    for(i = 0; i< 8; i++)
+    {
+        if(header.vBuffersSizes[i])
+        {    
+            FSeek(header.vBuffersOffsets[i] + 0xa8);
+            Buffer vertexBuffer(header.vBuffersSizes[i]);
+        }
+    }
+    for(i = 0; i< 8; i++)
+    {
+        if(header.idxBuffersSizes[i])
+        {
+            FSeek(header.idxBuffersOffsets[i] + 0xa8);
+            Buffer indexBuffer(header.idxBuffersSizes[i]);
+        }
+    }
+    
+    FSeek(header.eofOffset + 0xa8);
+    byte unkBuffer[header.eofInfoCount];
+
+    FSeek(header.eofOffset2 + 0xa8);
+    byte unkBuffer2[header.eofInfoCount2];
+
+    
+}File<name="MDL", open=true, bgcolor=cYellow>;

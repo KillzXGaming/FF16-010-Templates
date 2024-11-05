@@ -28,10 +28,11 @@ struct Header
     uint padd;
     
     ushort numTexturePaths;   
-    ushort unk;
+    byte paramFlag; //related to params. Possibly the param layout preset
+    byte unk;
     uint paramSectionSize;
     ushort numConstants;
-    ushort numShaders;
+    ushort numShaders; //if not 0, shb shaders are used
     ushort unk5;
     byte unk3;
     ubyte unk4;
